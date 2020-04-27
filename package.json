@@ -1,0 +1,20 @@
+{
+  "name": "sms-spam-classification",
+  "version": "1.0.0",
+  "description": "SMS spam classification using naive bayesian model",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "8.2.0",
+    "path": "0.12.7",
+    "csv-parser": "2.3.2",
+    "natural": "1.0.1",
+    "lemmatizer": "0.0.1"
+  }
+}
