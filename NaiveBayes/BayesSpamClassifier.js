@@ -33,19 +33,23 @@ class BayesSpamClassifier {
         }
 
         this.#getSpamPosteriorMax = (message) => {
-            const vocabularySize = this.#uniqueVocabulary.getVocabularySize();
+            const allWords =
+                this.#uniqueVocabulary.getVocabularySize() +
+                this.#spamDictionary.getDictionarySize();
             return message.reduce((accum, elem) => {
                 return accum + Math.log(
-                    (this.#spamDictionary.getWordCount(elem) + 1) / vocabularySize
+                    (this.#spamDictionary.getWordCount(elem) + 1) / allWords
                 );
             }, this.#lnProbSpam);
         }
 
         this.#getHamPosteriorMax = (message) => {
-            const vocabularySize = this.#uniqueVocabulary.getVocabularySize();
+            const allWords =
+                this.#uniqueVocabulary.getVocabularySize() +
+                this.#hamDictionary.getDictionarySize();
             return message.reduce((accum, elem) => {
                 return accum + Math.log(
-                    (this.#hamDictionary.getWordCount(elem) + 1) / vocabularySize
+                    (this.#hamDictionary.getWordCount(elem) + 1) / allWords
                 );
             }, this.#lnProbHam);
         }
@@ -92,10 +96,6 @@ class BayesSpamClassifier {
         return spamProb > hamProb
             ? {predictedLabel: 'spam', probability: spamProb}
             : {predictedLabel: 'ham', probability: hamProb}
-    }
-
-    isCorrectProbabilities(spamProb, hamProb) {
-        return spamProb + hamProb === 1;
     }
 }
 

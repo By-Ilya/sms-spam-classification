@@ -10,10 +10,9 @@ const runProcessCollection = require('./processCollection');
 const shuffle = require('./helpers/shuffle');
 const trainTestSplit = require('./helpers/trainTestSplit');
 
-const BayesSpamClassification = require('./NaiveBayes/BayesSpamClassifier');
+const BayesSpamClassifier = require('./NaiveBayes/BayesSpamClassifier');
 
 let CSV_DATA = [];
-let BAYES_MODEL = new BayesSpamClassification();
 
 run = async () => {
     if (!await isFileExists(config.smsCollectionPath)) {
@@ -33,18 +32,19 @@ runProcessing = async () => {
     const shuffledCollection = shuffle(processedCollection);
     const {train, test} = trainTestSplit(shuffledCollection);
 
-    BAYES_MODEL.fit(train);
+    let bayesSpamClassifier = new BayesSpamClassifier();
+    bayesSpamClassifier.fit(train);
 
     let positiveAnswers = 0;
     test.forEach(messageObj => {
-        const {predictedLabel, probability} = BAYES_MODEL.predict(messageObj.message);
-        console.log(`True: ${messageObj.label}, predicted: ${predictedLabel}, probability: ${probability}`);
+        const {
+            predictedLabel,
+            probability
+        } = bayesSpamClassifier.predict(messageObj.message);
         if (messageObj.label === predictedLabel) {
             positiveAnswers++;
         }
     });
-
-    console.log(`Accuracy = ${positiveAnswers / test.length}`);
 }
 
 
