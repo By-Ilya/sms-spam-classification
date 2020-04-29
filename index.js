@@ -9,10 +9,23 @@ const {
 const runProcessCollection = require('./processCollection');
 const shuffle = require('./helpers/shuffle');
 const trainTestSplit = require('./helpers/trainTestSplit');
+const {
+    calculateAccuracy,
+    calculatePrecision,
+    calculateRecall,
+    calculateF1
+} = require('./helpers/metrics');
 
 const BayesSpamClassifier = require('./NaiveBayes/BayesSpamClassifier');
 
 let CSV_DATA = [];
+let CONFUSION_MATRIX;
+let EXPERIMENT_RESULTS = {
+    accuracy: 0,
+    precision: 0,
+    recall: 0,
+    f1: 0
+};
 
 run = async () => {
     if (!await isFileExists(config.smsCollectionPath)) {
@@ -29,23 +42,58 @@ run = async () => {
 runProcessing = async () => {
     const processedCollection = await runProcessCollection(CSV_DATA);
 
-    const shuffledCollection = shuffle(processedCollection);
-    const {train, test} = trainTestSplit(shuffledCollection);
+    for (let i = 0; i < config.countExperiments; i++) {
+        console.log(`Experiment ${i + 1}/${config.countExperiments}`);
+        runInitStage();
 
-    let bayesSpamClassifier = new BayesSpamClassifier();
-    bayesSpamClassifier.fit(train);
+        const shuffledCollection = shuffle(processedCollection);
+        const {train, test} = trainTestSplit(shuffledCollection);
 
-    let positiveAnswers = 0;
-    test.forEach(messageObj => {
-        const {
-            predictedLabel,
-            probability
-        } = bayesSpamClassifier.predict(messageObj.message);
-        if (messageObj.label === predictedLabel) {
-            positiveAnswers++;
-        }
-    });
+        let bayesSpamClassifier = new BayesSpamClassifier();
+        bayesSpamClassifier.fit(train);
+
+        let positiveAnswers = 0;
+        test.forEach(messageObj => {
+            const {
+                predictedLabel
+            } = bayesSpamClassifier.predict(messageObj.message);
+            if (messageObj.label === predictedLabel) {
+                positiveAnswers++;
+                CONFUSION_MATRIX.TP++;
+            } else {
+                if (messageObj.label === 'spam')
+                    CONFUSION_MATRIX.FP++;
+                else CONFUSION_MATRIX.FN++;
+            }
+        });
+
+        EXPERIMENT_RESULTS.accuracy +=
+            calculateAccuracy(positiveAnswers, test.length);
+        const precision =
+            calculatePrecision(CONFUSION_MATRIX.TP, CONFUSION_MATRIX.FP);
+        const recall =
+            calculateRecall(CONFUSION_MATRIX.TP, CONFUSION_MATRIX.FN);
+        EXPERIMENT_RESULTS.precision += precision;
+        EXPERIMENT_RESULTS.recall += recall;
+        EXPERIMENT_RESULTS.f1 += calculateF1(precision, recall);
+    }
+
+    printResults();
 }
 
+runInitStage = () => {
+    CONFUSION_MATRIX = {TP: 0, FP: 0, FN: 0};
+}
+
+printResults = () => {
+    console.log(`RESULTS:\n` +
+        ` - Count experiments: ${config.countExperiments}\n` +
+        ` - Train set size: ${config.trainSize}\n` +
+        ` - Avg accuracy: ${EXPERIMENT_RESULTS.accuracy / config.countExperiments}\n` +
+        ` - Avg precision: ${EXPERIMENT_RESULTS.precision / config.countExperiments}\n` +
+        ` - Avg recall: ${EXPERIMENT_RESULTS.recall / config.countExperiments}\n` +
+        ` - Avg F1-score: ${EXPERIMENT_RESULTS.f1 / config.countExperiments}`
+    );
+}
 
 run();
