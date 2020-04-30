@@ -3,6 +3,9 @@ const { lemmatizer } = require('lemmatizer');
 
 const wordTokenizer = new natural.WordTokenizer();
 
+const NUMBER_REG_EXP = /\d+/g;
+const NUMBER_TOKEN = '__NUMBER__';
+
 const runProcessCollection = async (collection) => {
     return collection.map(elem => {
         const label = elem['v1'];
@@ -19,11 +22,12 @@ const runProcessCollection = async (collection) => {
 
 normalizeMessage = (message) => {
     const tokens = wordTokenizer.tokenize(message);
-    const lemmas = tokens.map(token => {
+    return tokens.map(token => {
+        if (token.match(NUMBER_REG_EXP)) {
+            return NUMBER_TOKEN;
+        }
         return lemmatizer(token.toLowerCase());
     });
-
-    return lemmas;
 }
 
 
