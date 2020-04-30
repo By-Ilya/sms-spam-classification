@@ -59,11 +59,10 @@ runProcessing = async () => {
             } = bayesSpamClassifier.predict(messageObj.message);
             if (messageObj.label === predictedLabel) {
                 positiveAnswers++;
-                CONFUSION_MATRIX.TP++;
+                if (messageObj.label === 'spam') CONFUSION_MATRIX.TP++;
             } else {
-                if (messageObj.label === 'spam')
-                    CONFUSION_MATRIX.FP++;
-                else CONFUSION_MATRIX.FN++;
+                if (messageObj.label === 'ham') CONFUSION_MATRIX.FP++;
+                if (predictedLabel === 'ham') CONFUSION_MATRIX.FN++;
             }
         });
 
@@ -90,9 +89,9 @@ printResults = () => {
         ` - Count experiments: ${config.countExperiments}\n` +
         ` - Train set size: ${config.trainSize}\n` +
         ` - Avg accuracy: ${EXPERIMENT_RESULTS.accuracy / config.countExperiments}\n` +
-        ` - Avg precision: ${EXPERIMENT_RESULTS.precision / config.countExperiments}\n` +
-        ` - Avg recall: ${EXPERIMENT_RESULTS.recall / config.countExperiments}\n` +
-        ` - Avg F1-score: ${EXPERIMENT_RESULTS.f1 / config.countExperiments}`
+        ` - Avg precision (spam): ${EXPERIMENT_RESULTS.precision / config.countExperiments}\n` +
+        ` - Avg recall (spam): ${EXPERIMENT_RESULTS.recall / config.countExperiments}\n` +
+        ` - Avg F1-score (spam): ${EXPERIMENT_RESULTS.f1 / config.countExperiments}`
     );
 }
 
