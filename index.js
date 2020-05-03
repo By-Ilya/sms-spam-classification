@@ -13,7 +13,8 @@ const {
     calculateAccuracy,
     calculatePrecision,
     calculateRecall,
-    calculateF1
+    calculateF1,
+    calculateMatthewsCorrelation
 } = require('./helpers/metrics');
 
 const BayesSpamClassifier = require('./NaiveBayes/BayesSpamClassifier');
@@ -24,7 +25,8 @@ let EXPERIMENT_RESULTS = {
     accuracy: 0,
     precision: 0,
     recall: 0,
-    f1: 0
+    f1: 0,
+    correlationMatthews: 0
 };
 
 run = async () => {
@@ -59,29 +61,46 @@ runProcessing = async () => {
             } = bayesSpamClassifier.predict(messageObj.message);
             if (messageObj.label === predictedLabel) {
                 positiveAnswers++;
-                if (messageObj.label === 'spam') CONFUSION_MATRIX.TP++;
+                if (BayesSpamClassifier.isSpamLabel(messageObj.label))
+                    CONFUSION_MATRIX.TP++;
+                if (BayesSpamClassifier.isHamLabel(messageObj.label))
+                    CONFUSION_MATRIX.TN++;
             } else {
-                if (messageObj.label === 'ham') CONFUSION_MATRIX.FP++;
-                if (predictedLabel === 'ham') CONFUSION_MATRIX.FN++;
+                if (BayesSpamClassifier.isHamLabel(messageObj.label))
+                    CONFUSION_MATRIX.FP++;
+                if (BayesSpamClassifier.isHamLabel(predictedLabel))
+                    CONFUSION_MATRIX.FN++;
             }
         });
 
-        EXPERIMENT_RESULTS.accuracy +=
-            calculateAccuracy(positiveAnswers, test.length);
-        const precision =
-            calculatePrecision(CONFUSION_MATRIX.TP, CONFUSION_MATRIX.FP);
-        const recall =
-            calculateRecall(CONFUSION_MATRIX.TP, CONFUSION_MATRIX.FN);
+        EXPERIMENT_RESULTS.accuracy += calculateAccuracy(
+            positiveAnswers,
+            test.length
+        );
+        const precision = calculatePrecision(
+            CONFUSION_MATRIX.TP,
+            CONFUSION_MATRIX.FP
+        );
+        const recall = calculateRecall(
+            CONFUSION_MATRIX.TP,
+            CONFUSION_MATRIX.FN
+        );
         EXPERIMENT_RESULTS.precision += precision;
         EXPERIMENT_RESULTS.recall += recall;
         EXPERIMENT_RESULTS.f1 += calculateF1(precision, recall);
+        EXPERIMENT_RESULTS.correlationMatthews += calculateMatthewsCorrelation(
+                CONFUSION_MATRIX.TP,
+                CONFUSION_MATRIX.FP,
+                CONFUSION_MATRIX.TN,
+                CONFUSION_MATRIX.FN
+        );
     }
 
     printResults();
 }
 
 runInitStage = () => {
-    CONFUSION_MATRIX = {TP: 0, FP: 0, FN: 0};
+    CONFUSION_MATRIX = {TP: 0, FP: 0, TN: 0, FN: 0};
 }
 
 printResults = () => {
@@ -91,7 +110,8 @@ printResults = () => {
         ` - Avg accuracy: ${EXPERIMENT_RESULTS.accuracy / config.countExperiments}\n` +
         ` - Avg precision (spam): ${EXPERIMENT_RESULTS.precision / config.countExperiments}\n` +
         ` - Avg recall (spam): ${EXPERIMENT_RESULTS.recall / config.countExperiments}\n` +
-        ` - Avg F1-score (spam): ${EXPERIMENT_RESULTS.f1 / config.countExperiments}`
+        ` - Avg F1-score (spam): ${EXPERIMENT_RESULTS.f1 / config.countExperiments}\n` +
+        ` - Matthews correlation: ${EXPERIMENT_RESULTS.correlationMatthews / config.countExperiments}`
     );
 }
 

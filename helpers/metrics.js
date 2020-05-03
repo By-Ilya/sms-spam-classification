@@ -14,10 +14,16 @@ let calculateF1 = (precision, recall) => {
     return 2 * ((precision * recall) / (precision + recall));
 }
 
+let calculateMatthewsCorrelation = (TP, FP, TN, FN) => {
+    return (TP * TN - FP * FN) /
+        (Math.sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN)));
+}
+
 
 module.exports = {
     calculateAccuracy,
     calculatePrecision,
     calculateRecall,
-    calculateF1
+    calculateF1,
+    calculateMatthewsCorrelation
 };

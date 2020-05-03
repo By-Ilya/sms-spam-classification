@@ -9,18 +9,23 @@ class BayesSpamClassifier {
     #lnProbSpam;
     #lnProbHam;
 
-    #isSpamLabel;
     #setTrainProbabilities;
     #getSpamPosteriorMax;
     #getHamPosteriorMax;
+
+    static isSpamLabel(label) {
+        return label.toLowerCase() === 'spam';
+    }
+
+    static isHamLabel(label) {
+        return label.toLowerCase() === 'ham';
+    }
 
     constructor () {
         this.#documentsCount = { spam: 0, ham: 0 };
         this.#hamDictionary = new TrieDictionary();
         this.#spamDictionary = new TrieDictionary();
         this.#uniqueVocabulary = new VocabularySet();
-
-        this.#isSpamLabel = (label) => label.toLowerCase() === 'spam';
 
         this.#setTrainProbabilities = () => {
             const allDocumentsCount = this.#documentsCount.spam + this.#documentsCount.ham;
@@ -57,13 +62,14 @@ class BayesSpamClassifier {
 
     fit(trainSet) {
         trainSet.forEach(messageObj => {
-            if (this.#isSpamLabel(messageObj.label)) {
+            if (BayesSpamClassifier.isSpamLabel(messageObj.label)) {
                 this.#documentsCount.spam++;
                 messageObj.message.forEach(lemma => {
                     this.#spamDictionary.addWord(lemma);
                     this.#uniqueVocabulary.add(lemma);
                 });
-            } else {
+            }
+            if (BayesSpamClassifier.isHamLabel(messageObj.label)) {
                 this.#documentsCount.ham++;
                 messageObj.message.forEach(lemma => {
                     this.#hamDictionary.addWord(lemma);
